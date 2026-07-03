@@ -17,22 +17,32 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Grant execute permission for gradlew
+    - name: Create Proper Android Directory Structure
       run: |
-        if [ -f gradlew ]; then
-          chmod +x gradlew
-        else
-          gradle wrapper
-          chmod +x gradlew
-        fi
+        mkdir -p app/src/main/java/com/jarvis/automation
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/mipmap-hdpi
+        
+        # Moving Java files if they are in root
+        mv *.java app/src/main/java/com/jarvis/automation/ 2>/dev/null || true
+        
+        # Moving config/xml files if any
+        mv colors.xml app/src/main/res/values/ 2>/dev/null || true
+        mv ic_launcher*.xml app/src/main/res/mipmap-hdpi/ 2>/dev/null || true
+        
+        # Ensure build files are in right place
+        mv build.gradle app/ 2>/dev/null || true
+        mv settings.gradle ./ 2>/dev/null || true
+        mv gradle.properties ./ 2>/dev/null || true
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
+    - name: Install Gradle and Build Android Project
+      run: |
+        sudo apt-get update && sudo apt-get install -y gradle
+        gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/*.apk
